@@ -2,16 +2,21 @@
 ## // by: Cesar Laforet Coelho
 ## // at: 2024-08-06
 ## // 
-## // version: 1.1
+## // version: 1.2
 ## // 
 ## // this script creates a task schedule
 ## // that run the script ($scriptName) every 60 minutes
 ## // and it must be located in the same folder
 ## // /////////////////////////////////
 
-$taskName = "queue-cleanup"
+param (
+    [Parameter(Mandatory=$false)]
+    [string]$taskName = "queue-cleanup",
+    [Parameter(Mandatory=$false)]
+    [string]$scriptName = "queue-cleanup.ps1"
+)
+
 $taskPath = "\"
-$scriptName = "queue-cleanup.ps1"
 $currentPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Check if the task schedule already exists

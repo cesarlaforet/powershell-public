@@ -2,7 +2,7 @@
 ## // by: Cesar Laforet Coelho
 ## // at: 2024-08-06
 ## //
-## // version: 1.0
+## // version: 1.1
 ## // 
 ## // this script cancels/deletes all pending jobs
 ## // of the specified printer ($printerName)
@@ -22,6 +22,4 @@ function Remove-PrintJobs {
     }
 }
 
-# Usage example:
-$printerName = "DUMMY-PRINTER"
-Remove-PrintJobs -PrinterName $printerName
+Remove-PrintJobs -PrinterName "DUMMY-PRINTER"

@@ -2,7 +2,7 @@
 ## // by: Cesar Laforet Coelho
 ## // at: 2024-08-06
 ## //
-## // version: 1.0
+## // version: 1.1
 ## //
 ## // this script checks if DUMMY-PRINTER exists
 ## // is it's missing creates it.
@@ -11,7 +11,12 @@
 ## // /////////////////////////////////
 
 function Check-Printer {
-    $printer_name = "DUMMY-PRINTER"
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$PrinterName
+    )
+
+    $printer_name = $PrinterName
     $default_printer = (Get-WmiObject -Class Win32_Printer | Where-Object {$_.Default -eq $true}).Name
     Write-Host "$default_printer is the current default printer"
 
@@ -57,4 +62,4 @@ function Check-Printer {
     }
 }
 
-Check-Printer
+Check-Printer -PrinterName "DUMMY-PRINTER"
