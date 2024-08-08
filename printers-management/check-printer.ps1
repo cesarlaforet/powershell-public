@@ -2,7 +2,7 @@
 ## // by: Cesar Laforet Coelho
 ## // at: 2024-08-06
 ## //
-## // version: 1.1
+## // version: 1.2
 ## //
 ## // this script checks if DUMMY-PRINTER exists
 ## // is it's missing creates it.
@@ -10,7 +10,7 @@
 ## // apon creation uncomment lines 51 and 52 
 ## // /////////////////////////////////
 
-function Check-Printer {
+function Request-Printer {
     param (
         [Parameter(Mandatory=$true)]
         [string]$PrinterName
@@ -62,4 +62,4 @@ function Check-Printer {
     }
 }
 
-Check-Printer -PrinterName "DUMMY-PRINTER"
+Request-Printer -PrinterName "DUMMY-PRINTER"
