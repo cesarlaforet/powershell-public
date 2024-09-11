@@ -11,10 +11,12 @@ function Show-PackagesGUI($jsonContent, $filePath) {
     $form = New-Object System.Windows.Forms.Form
     $form.Text = "Select Packages"
     $form.Size = New-Object System.Drawing.Size(500, 450)
+    $form.StartPosition = "CenterScreen"
 
     $listBox = New-Object System.Windows.Forms.CheckedListBox
     $listBox.Size = New-Object System.Drawing.Size(460, 300)
     $listBox.Location = New-Object System.Drawing.Point(10, 10)
+    $listBox.Anchor = [System.Windows.Forms.AnchorStyles]::Top -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right -bor [System.Windows.Forms.AnchorStyles]::Bottom
 
     foreach ($source in $jsonContent.Sources) {
         $sourceName = $source.SourceDetails.Name
@@ -27,6 +29,7 @@ function Show-PackagesGUI($jsonContent, $filePath) {
     $selectAllButton.Text = "Select All"
     $selectAllButton.Location = New-Object System.Drawing.Point(10, 320)
     $selectAllButton.Size = New-Object System.Drawing.Size(120, 25)
+    $selectAllButton.Anchor = [System.Windows.Forms.AnchorStyles]::Bottom -bor [System.Windows.Forms.AnchorStyles]::Left
 
     $selectAllButton.Add_Click({
         0..($listBox.Items.Count - 1) | ForEach-Object { $listBox.SetItemChecked($_, $true) }
@@ -36,6 +39,7 @@ function Show-PackagesGUI($jsonContent, $filePath) {
     $deselectAllButton.Text = "Deselect All"
     $deselectAllButton.Location = New-Object System.Drawing.Point(140, 320)
     $deselectAllButton.Size = New-Object System.Drawing.Size(120, 25)
+    $deselectAllButton.Anchor = [System.Windows.Forms.AnchorStyles]::Bottom -bor [System.Windows.Forms.AnchorStyles]::Left
 
     $deselectAllButton.Add_Click({
         0..($listBox.Items.Count - 1) | ForEach-Object { $listBox.SetItemChecked($_, $false) }
@@ -45,6 +49,7 @@ function Show-PackagesGUI($jsonContent, $filePath) {
     $updateButton.Text = "Update"
     $updateButton.Location = New-Object System.Drawing.Point(10, 360)
     $updateButton.Size = New-Object System.Drawing.Size(460, 25)
+    $updateButton.Anchor = [System.Windows.Forms.AnchorStyles]::Bottom -bor [System.Windows.Forms.AnchorStyles]::Left -bor [System.Windows.Forms.AnchorStyles]::Right
 
     $updateButton.Add_Click({
         $selectedPackages = $listBox.CheckedItems | ForEach-Object { $_.Split(" - ")[0] }
