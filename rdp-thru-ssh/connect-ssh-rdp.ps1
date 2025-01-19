@@ -1,3 +1,9 @@
+# write the the console making it very visibel the current version of the script
+Write-Host "**************************"
+Write-Host "connect-ssh-rdp.ps1 v1.0.0"
+Write-Host "__________________________"
+
+
 # Define the path to the configuration file
 $configFilePath = "connect-ssh-rdp.cfg"
 
