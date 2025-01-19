@@ -34,3 +34,28 @@ This script allows you to establish an RDP connection through an SSH tunnel. It 
 
 - Ensure that you have the necessary permissions to run PowerShell scripts and establish SSH and RDP connections.
 - The script assumes that `ssh` and `mstsc` (Remote Desktop Connection) are available on your system.
+
+## Converting the Script to an Executable
+
+To convert the PowerShell script to an executable (.exe) file, you can use a tool like `ps2exe`. Follow these steps:
+
+1. Install `ps2exe` module if you haven't already:
+    ```powershell
+    Install-Module -Name ps2exe -Scope CurrentUser
+    ```
+
+2. Convert the script to an executable:
+    ```powershell
+    Invoke-ps2exe .\connect-ssh-rdp.ps1 -outFile .\connect-ssh-rdp.exe
+    ```
+
+3. You can now run the executable file:
+    ```powershell
+    .\connect-ssh-rdp.exe
+    ```
+
+## Notes
+
+- Ensure that you have the necessary permissions to install modules and run executables.
+- The executable will have the same functionality as the original PowerShell script.
+- You may need to adjust execution policies or antivirus settings to allow the executable to run.
