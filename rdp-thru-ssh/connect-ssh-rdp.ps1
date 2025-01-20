@@ -1,6 +1,6 @@
 # write the the console making it very visibel the current version of the script
 Write-Host "**************************"
-Write-Host "connect-ssh-rdp.ps1 v1.0.2"
+Write-Host "connect-ssh-rdp.ps1 v1.0.3"
 Write-Host "__________________________"
 
 
@@ -59,7 +59,7 @@ function Test-SSHTunnel {
 function Start-SSHTunnel {
     if (Test-SSHTunnel) {
         Write-Host "Skipping SSH tunnel setup as it is already active."
-        return
+        return $true
     }
     Write-Host "Starting SSH tunnel..."
 
