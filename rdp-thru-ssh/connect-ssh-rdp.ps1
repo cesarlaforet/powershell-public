@@ -1,6 +1,6 @@
 # write the the console making it very visibel the current version of the script
 Write-Host "**************************"
-Write-Host "connect-ssh-rdp.ps1 v1.0.1"
+Write-Host "connect-ssh-rdp.ps1 v1.0.2"
 Write-Host "__________________________"
 
 
@@ -23,6 +23,7 @@ $defaultConfigContent = @"
 function CreateDefaultConfig {
     $defaultConfigContent | Out-File -FilePath $configFilePath -Encoding ASCII
     Write-Host "Configuration file created at $configFilePath. Please update it with your settings."
+    Read-Host "Press Enter to exit"
     exit
 }
 
@@ -41,6 +42,7 @@ if ($sshServer -eq "<server_address>" -or
     $sshUser -eq "<ssh_user>" -or
     $rdpUser -eq "<rdp_user>") {
     Write-Host "Configuration file contains default values. Please update $configFilePath with your settings."
+    Read-Host "Press Enter to exit"
     exit
 }
 
@@ -48,7 +50,6 @@ if ($sshServer -eq "<server_address>" -or
 function Test-SSHTunnel {
     $isTunnelActive = netstat -an | Select-String ":$localPort.*LISTEN"
     if ($isTunnelActive) {
-        Write-Host "An SSH tunnel is already active on port $localPort."
         return $true
     }
     return $false
@@ -65,10 +66,13 @@ function Start-SSHTunnel {
     $sshCommand = "ssh -o StrictHostKeyChecking=no -L $localPort`:localhost`:3389 -p $sshPort $sshUser@$sshServer"
     Write-Host "Executing SSH Command: $sshCommand"
 
-    # Start the SSH process
-    $sshProcess = Start-Process -FilePath "cmd.exe" -ArgumentList "/c $sshCommand" -NoNewWindow -PassThru
+    # Start the SSH process without redirection
+    $sshProcess = Start-Process -FilePath "cmd.exe" -ArgumentList "/c $sshCommand"  -NoNewWindow -PassThru
 
-    Start-Sleep -Seconds 5 # Give the tunnel time to establish
+    # Wait for the user to enter the password and the SSH tunnel to establish
+    while (-not (Test-SSHTunnel)) {
+        Start-Sleep -Seconds 5
+    }
 
     if (Test-SSHTunnel) {
         Write-Host "SSH tunnel established successfully on port $localPort."
@@ -102,11 +106,9 @@ if (-not $desktopwidth -or $desktopwidth -eq 0 -or -not $desktopheight -or $desk
 
 # Function to start RDP connection
 function Start-RDPConnection {
-    # get current path
-    $currentPath = Get-Location
-
     # set the path to the RDP file
-    $rdpFilePath = "$currentPath\connect.rdp"
+    $rdpFilePath = "connect.rdp"
+
     $rdpFileContent = @"
 screen mode id:i:$screenmode
 use multimon:i:0
@@ -163,7 +165,12 @@ enablerdsaadauth:i:0
 "@
 
     $rdpFileContent | Out-File -FilePath $rdpFilePath -Encoding ASCII
-
+    
+    # Wait the file to be created
+    while (-not (Test-Path -Path $rdpFilePath)) {
+        Start-Sleep -Seconds 5
+    }
+    
     # Verify if the file was created
     if (Test-Path -Path $rdpFilePath) {
         Write-Host "RDP file created successfully at $rdpFilePath"
@@ -172,9 +179,11 @@ enablerdsaadauth:i:0
         return
     }
 
-    # mstsc $rdpFilePath /v:localhost:$localPort $mstscWidth $mstscHeight $mstscScreenMode
+    # Debugging: Print the arguments to verify their values
+    $arguments = @($rdpFilePath, "/v:localhost:$localPort", $mstscWidth, $mstscHeight, $mstscScreenMode)
+
     # Start the RDP connection
-    $rdpProcess = Start-Process -FilePath "mstsc.exe" -ArgumentList @($rdpFilePath, "/v:localhost:$localPort", $mstscWidth, $mstscHeight, $mstscScreenMode) -Wait -PassThru
+    $rdpProcess = Start-Process -FilePath "mstsc.exe" -ArgumentList "$arguments" -Wait -PassThru
 
     # Remove the temporary RDP file
     Remove-Item -Path $rdpFilePath -Force
@@ -196,8 +205,7 @@ if ($sshProcess) {
 
         # Close the SSH tunnel process
         Stop-Process -Id (netstat -ano | findstr :$sshPort | ForEach-Object { ($_ -split '\s+')[5] })
-        # kill the SSH tunnel process
-        $sshProcess.Kill()
+        
         Write-Host "SSH tunnel closed."
     } else {
         Write-Host "Failed to start RDP connection."

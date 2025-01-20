@@ -44,9 +44,9 @@ To convert the PowerShell script to an executable (.exe) file, you can use a too
     Install-Module -Name ps2exe -Scope CurrentUser
     ```
 
-2. Convert the script to an executable:
+2. Convert the script to an executable and set an icon:
     ```powershell
-    Invoke-ps2exe .\connect-ssh-rdp.ps1 -outFile .\connect-ssh-rdp.exe
+    Invoke-ps2exe .\connect-ssh-rdp.ps1 -outputFile .\connect-ssh-rdp.exe -iconFile .\icon.ico
     ```
 
 3. You can now run the executable file:
@@ -59,3 +59,4 @@ To convert the PowerShell script to an executable (.exe) file, you can use a too
 - Ensure that you have the necessary permissions to install modules and run executables.
 - The executable will have the same functionality as the original PowerShell script.
 - You may need to adjust execution policies or antivirus settings to allow the executable to run.
+- Make sure the icon file (.ico) is available at the specified path when creating the executable.
