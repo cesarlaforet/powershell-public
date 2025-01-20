@@ -18,12 +18,31 @@ if ($latestVersion -ne $null) {
         $latestExeUrl = "https://raw.githubusercontent.com/cesarlaforet/powershell-public/main/rdp-thru-ssh/connect-ssh-rdp.exe"
 
         # Define the path to save the latest executable
-        $latestExePath = Join-Path -Path $PSScriptRoot -ChildPath "connect-ssh-rdp-latest.exe"
+        $tempExePath = Join-Path -Path $env:TEMP -ChildPath "connect-ssh-rdp-latest.exe"
 
         # Download the latest executable
-        Invoke-WebRequest -Uri $latestExeUrl -OutFile $latestExePath
+        Invoke-WebRequest -Uri $latestExeUrl -OutFile $tempExePath
 
-        Write-Host "Downloaded the latest executable to $latestExePath"
+        Write-Host "Downloaded the latest executable to $tempExePath"
+
+        # Create a batch file to replace the old executable with the new one and restart it
+        $batchFilePath = Join-Path -Path $env:TEMP -ChildPath "update-and-restart.bat"
+        $currentExePath = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+
+        $batchFileContent = @"
+@echo off
+timeout /t 3 /nobreak > nul
+copy /y "$tempExePath" "$currentExePath"
+start "" "$currentExePath"
+del "%~f0"
+"@
+
+        $batchFileContent | Out-File -FilePath $batchFilePath -Encoding ASCII
+
+        Write-Host "Executing the update batch file..."
+        Start-Process -FilePath "cmd.exe" -ArgumentList "/c $batchFilePath"
+
+        # Exit the current script
         exit
     }
 }
