@@ -1,7 +1,32 @@
+# set current version from version.txt file
+$version = "1.0.4"
+
 # write the the console making it very visibel the current version of the script
-Write-Host "**************************"
-Write-Host "connect-ssh-rdp.ps1 v1.0.3"
-Write-Host "__________________________"
+Write-Host "***************************"
+Write-Host "connect-ssh-rdp.ps1 v$version"
+Write-Host "___________________________"
+
+# Check the GitHub repository for the latest version
+$latestVersion = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/cesarlaforet/powershell-public/main/rdp-thru-ssh/version.txt"
+if ($latestVersion -ne $null) {
+    $latestVersion = $latestVersion.Trim()
+    if ($latestVersion -ne $currentVersion) {
+        Write-Host "A newer version is available: $latestVersion"
+        Write-Host "Downloading the latest executable..."
+
+        # Define the URL of the latest executable
+        $latestExeUrl = "https://raw.githubusercontent.com/cesarlaforet/powershell-public/main/rdp-thru-ssh/connect-ssh-rdp.exe"
+
+        # Define the path to save the latest executable
+        $latestExePath = Join-Path -Path $PSScriptRoot -ChildPath "connect-ssh-rdp-latest.exe"
+
+        # Download the latest executable
+        Invoke-WebRequest -Uri $latestExeUrl -OutFile $latestExePath
+
+        Write-Host "Downloaded the latest executable to $latestExePath"
+        exit
+    }
+}
 
 
 # Define the path to the configuration file
