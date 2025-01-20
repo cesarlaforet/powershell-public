@@ -1,5 +1,5 @@
 # set current version from version.txt file
-$version = "1.0.4"
+$version = "1.0.5"
 
 # write the the console making it very visibel the current version of the script
 Write-Host "***************************"
@@ -8,9 +8,9 @@ Write-Host "___________________________"
 
 # Check the GitHub repository for the latest version
 $latestVersion = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/cesarlaforet/powershell-public/main/rdp-thru-ssh/version.txt"
-if ($latestVersion -ne $null) {
+if ($null -ne $latestVersion) {
     $latestVersion = $latestVersion.Trim()
-    if ($latestVersion -ne $currentVersion) {
+    if ($latestVersion -ne $Version) {
         Write-Host "A newer version is available: $latestVersion"
         Write-Host "Downloading the latest executable..."
 
