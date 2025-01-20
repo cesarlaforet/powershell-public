@@ -1,6 +1,6 @@
 # write the the console making it very visibel the current version of the script
 Write-Host "**************************"
-Write-Host "connect-ssh-rdp.ps1 v1.0.0"
+Write-Host "connect-ssh-rdp.ps1 v1.0.1"
 Write-Host "__________________________"
 
 
@@ -14,6 +14,9 @@ $defaultConfigContent = @"
 `$sshUser = "<ssh_user>"
 `$rdpUser = "<rdp_user>"
 `$localPort = 3399
+`$fullscreen = 1
+`$desktopwidth = 1920
+`$desktopheight = 1080
 "@
 
 # Function to create the default configuration file
@@ -76,15 +79,39 @@ function Start-SSHTunnel {
     }
 }
 
-# Function to start RDP connection
+# Determine the screen mode based on the fullscreen setting
+if ($fullscreen -eq 1) {
+    $screenmode = 2
+    $mstscScreenMode = "/f"
+} else {
+    $screenmode = 0
+    $mstscScreenMode = ""
+}
+
+# Check if $desktopwidth and $desktopheight are set if not use default values 1920x1080
+if (-not $desktopwidth -or $desktopwidth -eq 0 -or -not $desktopheight -or $desktopheight -eq 0) {
+    $desktopwidth = 1920
+    $mstscWidth = "/w:1920"
+    $desktopheight = 1080
+    $mstscHeight = "/h:1080"
+} else {
+    $mstscWidth = "/w:$desktopwidth"
+    $mstscHeight = "/h:$desktopheight"
+}
+
+
 # Function to start RDP connection
 function Start-RDPConnection {
-    $rdpFilePath = [System.IO.Path]::GetTempFileName() + ".rdp"
+    # get current path
+    $currentPath = Get-Location
+
+    # set the path to the RDP file
+    $rdpFilePath = "$currentPath\connect.rdp"
     $rdpFileContent = @"
-screen mode id:i:2
+screen mode id:i:$screenmode
 use multimon:i:0
-desktopwidth:i:1920
-desktopheight:i:1080
+desktopwidth:i:$desktopwidth
+desktopheight:i:$desktopheight
 session bpp:i:32
 winposstr:s:0,1,0,0,800,600
 compression:i:1
@@ -106,11 +133,53 @@ disable cursor setting:i:0
 bitmapcachepersistenable:i:1
 full address:s:localhost:$localPort
 username:s:$rdpUser
+remoteappmousemoveinject:i:1
+audiomode:i:0
+redirectprinters:i:1
+redirectlocation:i:0
+redirectcomports:i:0
+redirectsmartcards:i:1
+redirectwebauthn:i:1
+redirectclipboard:i:1
+redirectposdevices:i:0
+drivestoredirect:s:
+autoreconnection enabled:i:1
+authentication level:i:2
+prompt for credentials:i:0
+negotiate security layer:i:1
+remoteapplicationmode:i:0
+alternate shell:s:
+shell working directory:s:
+gatewayhostname:s:
+gatewayusagemethod:i:4
+gatewaycredentialssource:i:4
+gatewayprofileusagemethod:i:0
+promptcredentialonce:i:0
+gatewaybrokeringtype:i:0
+use redirection server name:i:0
+rdgiskdcproxy:i:0
+kdcproxyname:s:
+enablerdsaadauth:i:0
 "@
 
     $rdpFileContent | Out-File -FilePath $rdpFilePath -Encoding ASCII
 
-    $rdpProcess = Start-Process -FilePath "mstsc.exe" -ArgumentList $rdpFilePath -PassThru
+    # Verify if the file was created
+    if (Test-Path -Path $rdpFilePath) {
+        Write-Host "RDP file created successfully at $rdpFilePath"
+    } else {
+        Write-Host "Failed to create RDP file at $rdpFilePath"
+        return
+    }
+
+    # mstsc $rdpFilePath /v:localhost:$localPort $mstscWidth $mstscHeight $mstscScreenMode
+    # Start the RDP connection
+    $rdpProcess = Start-Process -FilePath "mstsc.exe" -ArgumentList @($rdpFilePath, "/v:localhost:$localPort", $mstscWidth, $mstscHeight, $mstscScreenMode) -Wait -PassThru
+
+    # Remove the temporary RDP file
+    Remove-Item -Path $rdpFilePath -Force
+
+
     return $rdpProcess
 }
 
@@ -121,12 +190,17 @@ $sshProcess = Start-SSHTunnel
 if ($sshProcess) {
     $rdpProcess = Start-RDPConnection
     if ($rdpProcess) {
-        # Wait for the RDP process to exit
-        Wait-Process -Id $rdpProcess.Id
+        # check the status of the RDP process
+        $rdpProcess.WaitForExit()
+        Write-Host "RDP connection closed."
+
         # Close the SSH tunnel process
-        Stop-Process -Id $sshProcess.Id
+        Stop-Process -Id (netstat -ano | findstr :$sshPort | ForEach-Object { ($_ -split '\s+')[5] })
+        # kill the SSH tunnel process
+        $sshProcess.Kill()
         Write-Host "SSH tunnel closed."
-        exit
+    } else {
+        Write-Host "Failed to start RDP connection."
     }
 }
 
