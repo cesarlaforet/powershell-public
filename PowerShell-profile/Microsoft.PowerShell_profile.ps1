@@ -4,7 +4,7 @@
 [console]::InputEncoding = [console]::OutputEncoding = New-Object System.Text.UTF8Encoding
 
 # ------ Set Main Variables ------
-$setupDir = "$env:USERPROFILE\OneDrive\Documentos\PowerShell\"
+$setupDir = Split-Path -Parent $PROFILE
 $deployedFile = Join-Path $setupDir "ProfileSetup.deployed"
 $failedFile = Join-Path $setupDir "ProfileSetup.failed"
 $promptConfigName = "jblab_2021.omp.json" # Get more themes at https://ohmyposh.dev/docs/themes
