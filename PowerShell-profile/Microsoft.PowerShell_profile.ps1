@@ -105,14 +105,30 @@ if (!(Test-Path $deployedFile) -and !(Test-Path $failedFile)) {
             }
             Expand-Archive -Path $dest -DestinationPath $unzipPath -Force
             Write-Host "Hack font downloaded and extracted to $unzipPath" -ForegroundColor Green
-            
-            # Install the Hack font
+
+            # Install the Hack font for the current user (no admin required)
             $fontFiles = Get-ChildItem -Path $unzipPath -Filter "*.ttf" -Recurse
+            $fontsFolder = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts"
+
+            # Ensure the local fonts folder exists
+            if (-not (Test-Path $fontsFolder)) {
+                New-Item -ItemType Directory -Path $fontsFolder | Out-Null
+            }
+
             foreach ($fontFile in $fontFiles) {
+                $fontName = $fontFile.Name
                 $fontPath = $fontFile.FullName
-                $destination = Join-Path $env:windir "Fonts\$($fontFile.Name)"
-                Copy-Item -Path $fontPath -Destination $destination -Force
-                Write-Host "Installed font: $($fontFile.Name)" -ForegroundColor Green
+                $destFontPath = Join-Path $fontsFolder $fontName
+
+                # Copy font to the user's local fonts folder
+                Copy-Item -Path $fontPath -Destination $destFontPath -Force
+                Write-Host "Copied $fontName to $fontsFolder" -ForegroundColor Green
+
+                # Register font in the user's registry
+                $regPath = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
+                $fontRegName = "$fontName (TrueType)"
+                New-ItemProperty -Path $regPath -Name $fontRegName -Value $fontName -PropertyType String -Force | Out-Null
+                Write-Host "Registered $fontRegName in user registry." -ForegroundColor Green
             }
           }
 
@@ -127,8 +143,21 @@ if (!(Test-Path $deployedFile) -and !(Test-Path $failedFile)) {
                         $profiles | Add-Member -MemberType NoteProperty -Name font -Value (@{})
                     }
                     $profiles.font.face = "Hack Nerd Font Mono"
-                    $profiles.opacity = 20
-                    $profiles.useAcrylic = $true
+
+                    # Ensure 'opacity' property exists
+                    if ($null -eq $profiles.PSObject.Properties['opacity']) {
+                        $profiles | Add-Member -MemberType NoteProperty -Name opacity -Value 20
+                    } else {
+                        $profiles.opacity = 20
+                    }
+
+                    # Ensure 'useAcrylic' property exists
+                    if ($null -eq $profiles.PSObject.Properties['useAcrylic']) {
+                        $profiles | Add-Member -MemberType NoteProperty -Name useAcrylic -Value $true
+                    } else {
+                        $profiles.useAcrylic = $true
+                    }
+
                     Write-Host "Set font and acrylic settings for profile: $($profiles.name)" -ForegroundColor Green
                 }
             }
@@ -139,7 +168,12 @@ if (!(Test-Path $deployedFile) -and !(Test-Path $failedFile)) {
 
         # Install Oh-My-Posh
         if (-not (Test-CommandExists oh-my-posh)) {
+            # Installing Oh-My-Posh via winget
             Write-Host "Installing Oh-My-Posh..." -ForegroundColor Yellow
+            if (Test-CommandExists winget) {
+                winget install JanDeDobbeleer.OhMyPosh --accept-source-agreements --accept-package-agreements -e
+            }
+            # Installing Oh-My-Posh powershell module
             Install-Module -Name oh-my-posh -Scope CurrentUser -Force -SkipPublisherCheck
             Write-Host "Oh-My-Posh installed successfully." -ForegroundColor Green
         } else {
