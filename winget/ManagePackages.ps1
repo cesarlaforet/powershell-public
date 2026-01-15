@@ -5,7 +5,7 @@ function Load-JsonContent($filePath) {
     $jsonContent = Get-Content -Path $filePath -Raw | ConvertFrom-Json
     return $jsonContent
 }
-
+ 
 # Function to display the GUI
 function Show-PackagesGUI($jsonContent, $filePath) {
     $form = New-Object System.Windows.Forms.Form
