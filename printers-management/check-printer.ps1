@@ -12,8 +12,8 @@
 
 function Request-Printer {
     param (
-        [Parameter(Mandatory=$true)]
-        [string]$PrinterName
+        [Parameter(Mandatory=$false)]
+        [string]$PrinterName = "DUMMY-PRINTER"
     )
 
     $printer_name = $PrinterName
@@ -45,21 +45,48 @@ function Request-Printer {
     }
     else {
         # Add the printer
-        $printer_info = @{
-            "Name" = $printer_name
-            "PortName" = "nul:"
-            "DriverName" = "Microsoft PCL6 Class Driver"
+        $desiredDriver = "Microsoft PCL6 Class Driver"
+        $fallbackDriver = "Microsoft Print to PDF"
+        $availableDrivers = Get-PrinterDriver | Select-Object -ExpandProperty Name
+        $driverToUse = $null
+        if ($availableDrivers -contains $desiredDriver) {
+            $driverToUse = $desiredDriver
+        } elseif ($availableDrivers -contains $fallbackDriver) {
+            Write-Host "Warning: '$desiredDriver' not found. Using '$fallbackDriver' instead."
+            $driverToUse = $fallbackDriver
+        } else {
+            Write-Host "Error: Neither '$desiredDriver' nor '$fallbackDriver' printer drivers are available. Please install a suitable printer driver."
+            return
         }
 
-            Add-Printer -Name $printer_info.Name -DriverName $printer_info.DriverName -PortName $printer_info.PortName
+        $portName = "nul:"
+        # Check if the port exists, if not, create it
+        $portExists = Get-PrinterPort | Where-Object { $_.Name -eq $portName }
+        if (-not $portExists) {
+            try {
+                Add-PrinterPort -Name $portName
+                Write-Host "Created printer port: $portName"
+            } catch {
+                Write-Host "Failed to create printer port: $portName. Error: $_"
+                return
+            }
+        }
 
-            # $query = "Select * From Win32_Printer Where Name = '$($printer_info.Name)'"
-            # Invoke-CimMethod -Query $query -Namespace Root/CIMV2 -MethodName Pause
+        $printer_info = @{
+            "Name" = $printer_name
+            "PortName" = $portName
+            "DriverName" = $driverToUse
+        }
 
-            $WshNetwork = New-Object -ComObject WScript.Network
-            $WshNetwork.SetDefaultPrinter($printer_info.Name)
-            Write-Host "$($printer_info.Name) set as the default printer"
+        Add-Printer -Name $printer_info.Name -DriverName $printer_info.DriverName -PortName $printer_info.PortName
+
+        # $query = "Select * From Win32_Printer Where Name = '$($printer_info.Name)'"
+        # Invoke-CimMethod -Query $query -Namespace Root/CIMV2 -MethodName Pause
+
+        $WshNetwork = New-Object -ComObject WScript.Network
+        $WshNetwork.SetDefaultPrinter($printer_info.Name)
+        Write-Host "$($printer_info.Name) set as the default printer"
     }
 }
 
-Request-Printer -PrinterName "DUMMY-PRINTER"
+Request-Printer
