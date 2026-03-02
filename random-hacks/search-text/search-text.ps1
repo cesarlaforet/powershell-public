@@ -20,9 +20,14 @@ if ($MinDate) {
 $totalFiles = $xmlFiles.Count
 $processed = 0
 
+
+# Store matches to print after processing
+$matches = @()
+
 foreach ($file in $xmlFiles) {
 	$processed++
-	Write-Host ("Processing [$processed/$totalFiles]: " + $file.FullName) -ForegroundColor DarkGray
+	# Overwrite the previous line with the current processing file
+	Write-Host ("`rProcessing [$processed/$totalFiles]: $($file.FullName)        ") -NoNewline -ForegroundColor DarkGray
 
 	$foundInName = $false
 	$foundInContent = $false
@@ -39,8 +44,21 @@ foreach ($file in $xmlFiles) {
 	}
 
 	if ($foundInName -or $foundInContent) {
-		Write-Host "Match found in: $($file.FullName)" -ForegroundColor Green
-		if ($foundInName) { Write-Host "  -> In filename" -ForegroundColor Yellow }
-		if ($foundInContent) { Write-Host "  -> In file content" -ForegroundColor Cyan }
+		$matchInfo = "Match found in: $($file.FullName)"
+		if ($foundInName) { $matchInfo += "`n  -> In filename" }
+		if ($foundInContent) { $matchInfo += "`n  -> In file content" }
+		$matches += $matchInfo
+	}
+}
+
+# Clear the processing line
+Write-Host "`r`n" -NoNewline
+
+# Print all matches
+if ($matches.Count -eq 0) {
+	Write-Host "No matches found." -ForegroundColor Yellow
+} else {
+	foreach ($m in $matches) {
+		Write-Host $m -ForegroundColor Green
 	}
 }
