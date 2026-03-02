@@ -1,15 +1,22 @@
 # Script to search for a string in XML filenames and contents recursively
-# Usage: .\search-text.ps1 -Path "C:\folder" -SearchString "99864244"
+# Usage: .\search-text.ps1 -Path "C:\folder" -SearchString "99864244" -MinDate "2024-01-01"
 
 param(
 	[Parameter(Mandatory=$true)]
 	[string]$Path,
 	[Parameter(Mandatory=$true)]
-	[string]$SearchString
+	[string]$SearchString,
+	[Parameter(Mandatory=$false)]
+	[datetime]$MinDate
 )
 
-# Get all XML files recursively
-$xmlFiles = Get-ChildItem -Path $Path -Filter *.xml -Recurse -File
+
+# Get all XML files recursively, optionally filter by MinDate
+if ($MinDate) {
+	$xmlFiles = Get-ChildItem -Path $Path -Filter *.xml -Recurse -File | Where-Object { $_.LastWriteTime -ge $MinDate }
+} else {
+	$xmlFiles = Get-ChildItem -Path $Path -Filter *.xml -Recurse -File
+}
 $totalFiles = $xmlFiles.Count
 $processed = 0
 
