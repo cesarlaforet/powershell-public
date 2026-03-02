@@ -10,8 +10,13 @@ param(
 
 # Get all XML files recursively
 $xmlFiles = Get-ChildItem -Path $Path -Filter *.xml -Recurse -File
+$totalFiles = $xmlFiles.Count
+$processed = 0
 
 foreach ($file in $xmlFiles) {
+	$processed++
+	Write-Host ("Processing [$processed/$totalFiles]: " + $file.FullName) -ForegroundColor DarkGray
+
 	$foundInName = $false
 	$foundInContent = $false
 
